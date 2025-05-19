@@ -2,18 +2,21 @@
 
 namespace SimpleRESTServer.Models
 {
-    [XmlRoot("Message")]
     public class Message
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Content { get; set; }
+        public string Author { get; set; }
+        public DateTime Created { get; set; }
 
         public Message() { }
 
-        public Message(int id, string content)
+        public Message(long id, string content, string author)
         {
             Id = id;
             Content = content;
+            Author = author;
+            Created = DateTime.UtcNow;
         }
     }
 }
