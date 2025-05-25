@@ -3,6 +3,7 @@ using SimpleRESTServer.Models;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http.Extensions;
+using System.Globalization;
 
 namespace SimpleRESTServer.Controllers
 {
@@ -10,21 +11,28 @@ namespace SimpleRESTServer.Controllers
     [Route("api/messages")]
     public class MessagesController : ControllerBase
     {
-        // Symulacja bazy danych w pamięci (Dictionary)
+        // Data
         private static readonly Dictionary<long, Message> _messages = new Dictionary<long, Message>
         {
             { 1, new Message(1, "Pierwsza wiadomość", "Jan") },
             { 2, new Message(2, "Druga wiadomość", "Anna") }
         };
 
-        // GET /api/messages - wszystkie wiadomości
+        // GET /api/messages
         [HttpGet]
-        public ActionResult<List<Message>> GetAll()
+        public ActionResult<List<Message>> GetAll([FromQuery(Name = "startswith")] string? startsWith = null)
         {
-            return _messages.Values.ToList();
+            var result = _messages.Values.AsEnumerable();
+
+            if (!string.IsNullOrEmpty(startsWith))
+            {
+                result = result.Where(m => m.Content.StartsWith(startsWith, true, CultureInfo.InvariantCulture));
+            }
+
+            return result.ToList();
         }
 
-        // GET /api/messages/{id} - jedna wiadomość
+        // GET /api/messages/{id}
         [HttpGet("{id}")]
         public ActionResult<Message> Get(long id)
         {
@@ -34,7 +42,7 @@ namespace SimpleRESTServer.Controllers
             return NotFound();
         }
 
-        // POST /api/messages - tworzenie wiadomości
+        // POST /api/messages
         [HttpPost]
         public ActionResult<Message> Create([FromBody] Message message)
         {
@@ -46,7 +54,7 @@ namespace SimpleRESTServer.Controllers
             return CreatedAtAction(nameof(Get), new { id = newId }, message);
         }
 
-        // PUT /api/messages/{id} - aktualizacja wiadomości
+        // PUT /api/messages/{id}
         [HttpPut("{id}")]
         public ActionResult<Message> Update(long id, [FromBody] Message updatedMessage)
         {
@@ -60,7 +68,7 @@ namespace SimpleRESTServer.Controllers
             return Ok(updatedMessage);
         }
 
-        // DELETE /api/messages/{id} - usuwanie wiadomości
+        // DELETE /api/messages/{id}
         [HttpDelete("{id}")]
         public IActionResult Delete(long id)
         {
@@ -77,7 +85,6 @@ namespace SimpleRESTServer.Controllers
         {
             var path = Request.Path.Value; // np. "/api/messages/params;tag=test;debug=true"
 
-            // Wyodrębnij matrix parametry ręcznie
             var matrixPart = path?.Split("params", 2).LastOrDefault();
             var matrixParams = matrixPart?.Split(';')
                 .Skip(1)

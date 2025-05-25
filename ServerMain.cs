@@ -10,6 +10,8 @@ namespace SimpleRESTServer
 
             // Add services to the container.
             builder.Services.AddControllersWithViews().AddXmlDataContractSerializerFormatters();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
@@ -29,6 +31,10 @@ namespace SimpleRESTServer
             app.UseRouting();
 
             app.UseAuthorization();
+
+            // Enable Swagger middleware
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.MapControllerRoute(
                 name: "default",
