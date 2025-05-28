@@ -1,3 +1,4 @@
+using SimpleRESTServer.Controllers;
 using System.Net;
 
 namespace SimpleRESTServer
@@ -9,9 +10,15 @@ namespace SimpleRESTServer
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllersWithViews().AddXmlDataContractSerializerFormatters();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add<CustomHeaderFilter>();
+            })
+            .AddXmlDataContractSerializerFormatters();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddSingleton<MessagesController>();
 
             var app = builder.Build();
 
@@ -28,8 +35,10 @@ namespace SimpleRESTServer
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseRouting();
+            // Optional: Add BasicAuth middleware
+            app.UseMiddleware<BasicAuthMiddleware>();
 
+            app.UseRouting();
             app.UseAuthorization();
 
             // Enable Swagger middleware

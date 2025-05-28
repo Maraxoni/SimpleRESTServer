@@ -13,10 +13,30 @@ namespace SimpleRESTServer.Controllers
     {
         // Data
         private static readonly Dictionary<long, Message> _messages = new Dictionary<long, Message>
+{
+    {
+        1,
+        new Message(1, "Pierwsza wiadomość", "Jan")
         {
-            { 1, new Message(1, "Pierwsza wiadomość", "Jan") },
-            { 2, new Message(2, "Druga wiadomość", "Anna") }
-        };
+            Comments = new List<Comment>
+            {
+                new Comment(1, "Super wiadomość!", "Marek"),
+                new Comment(2, "Dzięki za info.", "Ewa")
+            }
+        }
+    },
+    {
+        2,
+        new Message(2, "Druga wiadomość", "Anna")
+        {
+            Comments = new List<Comment>
+            {
+                new Comment(3, "Zgadzam się z tobą.", "Kasia"),
+                new Comment(4, "Nie jestem pewien co do tego.", "Tomek")
+            }
+        }
+    }
+};
 
         // GET /api/messages
         [HttpGet]
@@ -36,8 +56,23 @@ namespace SimpleRESTServer.Controllers
         [HttpGet("{id}")]
         public ActionResult<Message> Get(long id)
         {
+            if (!_messages.TryGetValue(id, out var message))
+                return NotFound();
+
+            var url = Url.Action(nameof(Get), new { id });
+            var commentUrl = Url.Action(nameof(GetComments), new { id });
+
+            return Ok(message);
+        }
+
+        // GET /api/messages/{id}/comments
+        [HttpGet("{id}/comments")]
+        public ActionResult<List<Comment>> GetComments(long id)
+        {
             if (_messages.TryGetValue(id, out var message))
-                return Ok(message);
+            {
+                return Ok(message.Comments);
+            }
 
             return NotFound();
         }
@@ -50,6 +85,10 @@ namespace SimpleRESTServer.Controllers
             message.Id = newId;
             message.Created = DateTime.UtcNow;
             _messages[newId] = message;
+
+            var locationUrl = Url.Action(nameof(Get), new { id = newId });
+
+            Response.Headers.Add("Location", locationUrl);
 
             return CreatedAtAction(nameof(Get), new { id = newId }, message);
         }
