@@ -49,7 +49,9 @@ namespace SimpleRESTServer.Controllers
                 result = result.Where(m => m.Content.StartsWith(startsWith, true, CultureInfo.InvariantCulture));
             }
 
-            return result.ToList();
+            var withLinks = result.Select(AddLinksToMessage).ToList();
+
+            return Ok(withLinks);
         }
 
         // GET /api/messages/{id}
@@ -62,7 +64,8 @@ namespace SimpleRESTServer.Controllers
             var url = Url.Action(nameof(Get), new { id });
             var commentUrl = Url.Action(nameof(GetComments), new { id });
 
-            return Ok(message);
+            var withLinks = AddLinksToMessage(message);
+            return Ok(withLinks);
         }
 
         // GET /api/messages/{id}/comments
@@ -142,7 +145,17 @@ namespace SimpleRESTServer.Controllers
                 AllHeaders = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString())
             });
         }
+        private Message AddLinksToMessage(Message message)
+        {
+            var resource = new Message(message);
 
+            resource.Links.Add(new Link(Url.Action(nameof(Get), new { id = message.Id })!, "self", "GET"));
+            resource.Links.Add(new Link(Url.Action(nameof(GetComments), new { id = message.Id })!, "comments", "GET"));
+            resource.Links.Add(new Link(Url.Action(nameof(Update), new { id = message.Id })!, "update", "PUT"));
+            resource.Links.Add(new Link(Url.Action(nameof(Delete), new { id = message.Id })!, "delete", "DELETE"));
+
+            return resource;
+        }
 
     }
 }
